@@ -2,6 +2,7 @@ import json
 import os
 import sys
 import textwrap
+from configparser import ConfigParser
 
 from openai import OpenAI
 from openai.types import ChatModel
@@ -15,8 +16,7 @@ if KEY is None:
 CLIENT = OpenAI(api_key=KEY)
 
 HISTORY_FILE = os.path.expanduser("~/.howto_history")
-
-model = "gpt-4o"
+CONFIG_FILE = os.path.expanduser("~/.howto_config")
 
 def load_history() -> list:
     if not os.path.exists(HISTORY_FILE):
@@ -28,6 +28,21 @@ def save_history(history) -> None:
     with open(HISTORY_FILE, "w") as f:
         json.dump(history, f)
 
+def load_config() -> ConfigParser:
+    config = ConfigParser()
+    config.read(CONFIG_FILE)
+
+    if not config.has_section("ai model"):
+        config.add_section("ai model")
+    if not config.has_option("ai model", "model"):
+        config["ai model"]["model"] = "gpt-4o"
+
+    return config
+
+def save_config(config: ConfigParser) -> None:
+    with open(CONFIG_FILE, "w") as f:
+        config.write(f)
+
 def print_help() -> None:
     print(
 """
@@ -36,8 +51,8 @@ Usage: howto [question] [--setmodel <model>] [--clearhistory] [--help]
 
 Query's Openai's api for information about any given question.
 
---setmodel      Sets the model used by howto. Use without arguments to
-                query the model.
+--setmodel      Sets the model used by howto (located in ~/.howto_config).
+                Use without arguments to query the model.
 
 --clearhistory  Clears the local history (located in ~/.howto_history).
 
@@ -46,7 +61,7 @@ Query's Openai's api for information about any given question.
     )
 
 def main() -> None:
-    global model
+    config = load_config()
     arg1 = sys.argv[1] if len(sys.argv) > 1 else None
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
     if arg1 == "--help" or arg1 == "-h":
@@ -58,15 +73,16 @@ def main() -> None:
         sys.exit(1)
     elif arg1 == "--setmodel":
         if arg2 is None:
-            print(f"Current model is: '{model}'")
+            print(f"Current model is: '{config["ai model"]["model"]}'")
             sys.exit(1)
 
         if arg2 not in get_args(ChatModel):
             print(f"Invalid model: '{arg2}'")
             sys.exit(1)
 
-        model = arg2
-        print(f"Model set to: '{model}'")
+        config["ai model"]["model"] = arg2
+        print(f"Model set to: '{config["ai model"]["model"]}'")
+        save_config(config)
         sys.exit(1)
 
     question = " ".join(sys.argv[1:]).strip()
@@ -78,7 +94,7 @@ def main() -> None:
     history = load_history() + [{"role":"user", "content": question}]
 
     response = CLIENT.chat.completions.create(
-        model=model,
+        model=config["ai model"]["model"],
         messages=[{"role":"system", "content": "You are an assistant contacted via a 'howto' CLI command. Questions may be formatted weirdly. If so, assume each question is preceded with 'how to' or similar. If the question can be answered in one or two sentences without immediately important information, keep responses short."}] + history
     )
 
@@ -94,6 +110,7 @@ def main() -> None:
     history.append({"role": "assistant", "content": answer})
 
     save_history(history[-10:])
+    save_config(config)
 
 if __name__ == "__main__":
     main()
