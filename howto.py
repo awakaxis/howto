@@ -36,6 +36,8 @@ def load_config() -> ConfigParser:
         config.add_section("ai model")
     if not config.has_option("ai model", "model"):
         config["ai model"]["model"] = "gpt-4o"
+    if not config.has_option("ai model", "history"):
+        config["ai model"]["history"] = "6"
 
     return config
 
@@ -53,6 +55,9 @@ Query's Openai's api for information about any given question.
 
 --setmodel      Sets the model used by howto (located in ~/.howto_config).
                 Use without arguments to query the model.
+                
+--sethistory    Sets the length of howto's history. Use without arguments
+                to query the history length.
 
 --clearhistory  Clears the local history (located in ~/.howto_history).
 
@@ -81,8 +86,21 @@ def main() -> None:
             sys.exit(1)
 
         config["ai model"]["model"] = arg2
-        print(f"Model set to: '{config["ai model"]["model"]}'")
         save_config(config)
+        print(f"Model set to: '{config["ai model"]["model"]}'")
+        sys.exit(1)
+    elif arg1 == "--sethistory":
+        if arg2 is None:
+            print(f"History length is: {config["ai model"]["history"]}")
+            sys.exit(1)
+
+        if not arg2.isdigit():
+            print(f"History length must be a number.")
+            sys.exit(1)
+
+        config["ai model"]["history"] = str(arg2)
+        save_config(config)
+        print(f"History length set to: {config["ai model"]["history"]}")
         sys.exit(1)
 
     question = " ".join(sys.argv[1:]).strip()
@@ -109,7 +127,7 @@ def main() -> None:
 
     history.append({"role": "assistant", "content": answer})
 
-    save_history(history[-10:])
+    save_history(history[-int(config["ai model"]["history"]):])
     save_config(config)
 
 if __name__ == "__main__":
