@@ -35,7 +35,7 @@ def load_config() -> ConfigParser:
     if not config.has_section("ai model"):
         config.add_section("ai model")
     if not config.has_option("ai model", "model"):
-        config["ai model"]["model"] = "gpt-4o"
+        config["ai model"]["model"] = "gpt-4o-mini"
     if not config.has_option("ai model", "history"):
         config["ai model"]["history"] = "6"
 
