@@ -48,7 +48,7 @@ def save_config(config: ConfigParser) -> None:
 def print_help() -> None:
     print(
 """
-Usage: howto [question] [--setmodel <model>] [--clearhistory] [--help]
+Usage: howto [question] [OPTIONS] [--help]
 
 
 Query's Openai's api for information about any given question.
@@ -64,44 +64,47 @@ Query's Openai's api for information about any given question.
 --help, -h      Prints this message.
 """
     )
+    sys.exit(1)
 
 def main() -> None:
     config = load_config()
     arg1 = sys.argv[1] if len(sys.argv) > 1 else None
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
-    if arg1 == "--help" or arg1 == "-h":
+    if arg1.startswith('-'):
+        if arg1 in ["--help", "-h"]:
+            print_help()
+            sys.exit(1)
+        elif arg1 == "--clearhistory":
+            save_history([])
+            print("Cleared history.")
+            sys.exit(1)
+        elif arg1 == "--setmodel":
+            if arg2 is None:
+                print(f"Current model is: '{config["ai model"]["model"]}'")
+                sys.exit(1)
+
+            if arg2 not in get_args(ChatModel):
+                print(f"Invalid model: '{arg2}'")
+                sys.exit(1)
+
+            config["ai model"]["model"] = arg2
+            save_config(config)
+            print(f"Model set to: '{config["ai model"]["model"]}'")
+            sys.exit(1)
+        elif arg1 == "--sethistory":
+            if arg2 is None:
+                print(f"History length is: {config["ai model"]["history"]}")
+                sys.exit(1)
+
+            if not arg2.isdigit():
+                print(f"History length must be a number.")
+                sys.exit(1)
+
+            config["ai model"]["history"] = str(arg2)
+            save_config(config)
+            print(f"History length set to: {config["ai model"]["history"]}")
+            sys.exit(1)
         print_help()
-        sys.exit(1)
-    elif arg1 == "--clearhistory":
-        save_history([])
-        print("Cleared history.")
-        sys.exit(1)
-    elif arg1 == "--setmodel":
-        if arg2 is None:
-            print(f"Current model is: '{config["ai model"]["model"]}'")
-            sys.exit(1)
-
-        if arg2 not in get_args(ChatModel):
-            print(f"Invalid model: '{arg2}'")
-            sys.exit(1)
-
-        config["ai model"]["model"] = arg2
-        save_config(config)
-        print(f"Model set to: '{config["ai model"]["model"]}'")
-        sys.exit(1)
-    elif arg1 == "--sethistory":
-        if arg2 is None:
-            print(f"History length is: {config["ai model"]["history"]}")
-            sys.exit(1)
-
-        if not arg2.isdigit():
-            print(f"History length must be a number.")
-            sys.exit(1)
-
-        config["ai model"]["history"] = str(arg2)
-        save_config(config)
-        print(f"History length set to: {config["ai model"]["history"]}")
-        sys.exit(1)
 
     question = " ".join(sys.argv[1:]).strip()
 
