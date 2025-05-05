@@ -53,15 +53,17 @@ Usage: howto [question] [OPTIONS] [--help]
 
 Query's Openai's api for information about any given question.
 
---setmodel      Sets the model used by howto (located in ~/.howto_config).
-                Use without arguments to query the model.
+--setmodel              Sets the model used by howto (located in ~/.howto_config).
+                        Use without arguments to query the model.
                 
---sethistory    Sets the length of howto's history. Use without arguments
-                to query the history length.
+--sethistory            Sets the length of howto's history. Use without arguments
+                        to query the history length.
 
---clearhistory  Clears the local history (located in ~/.howto_history).
+--printhistory, -ph     Formats and prints the history.          
 
---help, -h      Prints this message.
+--clearhistory          Clears the local history (located in ~/.howto_history).
+
+--help, -h              Prints this message.
 """
     )
     sys.exit(1)
@@ -103,6 +105,17 @@ def main() -> None:
             config["ai model"]["history"] = str(arg2)
             save_config(config)
             print(f"History length set to: {config["ai model"]["history"]}")
+            sys.exit(1)
+        elif arg1 in ["--printhistory", "-ph"]:
+            wrapper = textwrap.TextWrapper(width=os.get_terminal_size().columns - 6, drop_whitespace=False)
+            for entry in load_history():
+                if entry["role"] != "assistant":
+                    for line in wrapper.wrap(entry["content"]):
+                        print(f"# {line}")
+                else:
+                    for line in entry["content"].split("\n"):
+                        for line2 in wrapper.wrap(line):
+                            print(f"   # {line2}")
             sys.exit(1)
         print_help()
 
