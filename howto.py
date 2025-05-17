@@ -72,7 +72,7 @@ def main() -> None:
     config = load_config()
     arg1 = sys.argv[1] if len(sys.argv) > 1 else None
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
-    if arg1.startswith('-'):
+    if arg1 is not None and arg1.startswith('-'):
         if arg1 in ["--help", "-h"]:
             print_help()
             sys.exit(1)
