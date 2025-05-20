@@ -15,8 +15,11 @@ if KEY is None:
 
 CLIENT = OpenAI(api_key=KEY)
 
-HISTORY_FILE = os.path.expanduser("~/.howto_history")
-CONFIG_FILE = os.path.expanduser("~/.howto_config")
+HOWTO_DIR = os.makedirs(os.path.expanduser("~/.howto/"), exist_ok=True)
+HISTORY_FILE = os.path.expanduser(f"{HOWTO_DIR}history")
+CONFIG_FILE = os.path.expanduser(f"{HOWTO_DIR}config")
+USERINFO_FILE = os.path.expanduser(f"{HOWTO_DIR}userinfo")
+
 
 def load_history() -> list:
     if not os.path.exists(HISTORY_FILE):
