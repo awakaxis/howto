@@ -27,9 +27,11 @@ def load_history() -> list:
     with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
+
 def save_history(history) -> None:
     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f)
+
 
 def load_config() -> ConfigParser:
     config = ConfigParser()
@@ -44,13 +46,15 @@ def load_config() -> ConfigParser:
 
     return config
 
+
 def save_config(config: ConfigParser) -> None:
     with open(CONFIG_FILE, "w") as f:
         config.write(f)
 
+
 def print_help() -> None:
     print(
-"""
+        """
 Usage: howto [question] [OPTIONS] [--help]
 
 
@@ -71,11 +75,12 @@ Query's Openai's api for information about any given question.
     )
     sys.exit(1)
 
+
 def main() -> None:
     config = load_config()
     arg1 = sys.argv[1] if len(sys.argv) > 1 else None
     arg2 = sys.argv[2] if len(sys.argv) > 2 else None
-    if arg1 is not None and arg1.startswith('-'):
+    if arg1 is not None and arg1.startswith("-"):
         if arg1 in ["--help", "-h"]:
             print_help()
             sys.exit(1)
@@ -110,7 +115,9 @@ def main() -> None:
             print(f"History length set to: {config["ai model"]["history"]}")
             sys.exit(1)
         elif arg1 in ["--printhistory", "-ph"]:
-            wrapper = textwrap.TextWrapper(width=os.get_terminal_size().columns - 6, drop_whitespace=False)
+            wrapper = textwrap.TextWrapper(
+                width=os.get_terminal_size().columns - 6, drop_whitespace=False
+            )
             for entry in load_history():
                 if entry["role"] != "assistant":
                     for line in wrapper.wrap(entry["content"]):
@@ -128,26 +135,35 @@ def main() -> None:
         print_help()
         sys.exit(1)
 
-    history = load_history() + [{"role":"user", "content": question}]
+    history = load_history() + [{"role": "user", "content": question}]
 
     response = CLIENT.chat.completions.create(
         model=config["ai model"]["model"],
-        messages=[{"role":"system", "content": "You are an assistant contacted via a 'howto' CLI command. Questions may be formatted weirdly. If so, assume each question is preceded with 'how to' or similar. If the question can be answered in one or two sentences without immediately important information, keep responses short."}] + history
+        messages=[
+            {
+                "role": "system",
+                "content": "You are an assistant contacted via a 'howto' CLI command. Questions may be formatted weirdly. If so, assume each question is preceded with 'how to' or similar. If the question can be answered in one or two sentences without immediately important information, keep responses short.",
+            }
+        ]
+        + history,
     )
 
     answer = response.choices[0].message.content
     lines = answer.split("\n")
-    print(f'#')
-    wrapper = textwrap.TextWrapper(width=os.get_terminal_size().columns - 6, drop_whitespace=False)
+    print(f"#")
+    wrapper = textwrap.TextWrapper(
+        width=os.get_terminal_size().columns - 6, drop_whitespace=False
+    )
     for line in lines:
         for line2 in wrapper.wrap(line):
-            print(f'# {line2}')
-    print('#')
+            print(f"# {line2}")
+    print("#")
 
     history.append({"role": "assistant", "content": answer})
 
-    save_history(history[-int(config["ai model"]["history"]):])
+    save_history(history[-int(config["ai model"]["history"]) :])
     save_config(config)
+
 
 if __name__ == "__main__":
     main()
