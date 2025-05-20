@@ -24,11 +24,11 @@ USERINFO_FILE = os.path.expanduser(f"{HOWTO_DIR}userinfo")
 def load_history() -> list:
     if not os.path.exists(HISTORY_FILE):
         return []
-    with open(HISTORY_FILE, "r") as f:
+    with open(HISTORY_FILE, "r", encoding="utf-8") as f:
         return json.load(f)
 
 def save_history(history) -> None:
-    with open(HISTORY_FILE, "w") as f:
+    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
         json.dump(history, f)
 
 def load_config() -> ConfigParser:
