@@ -15,10 +15,12 @@ if KEY is None:
 
 CLIENT = OpenAI(api_key=KEY)
 
-HOWTO_DIR = os.makedirs(os.path.expanduser("~/.howto/"), exist_ok=True)
+HOWTO_DIR = os.path.expanduser("~/.howto/")
 HISTORY_FILE = os.path.expanduser(f"{HOWTO_DIR}history")
 CONFIG_FILE = os.path.expanduser(f"{HOWTO_DIR}config")
 USERINFO_FILE = os.path.expanduser(f"{HOWTO_DIR}userinfo")
+
+os.makedirs(HOWTO_DIR, exist_ok=True)
 
 
 def load_history() -> list:
@@ -149,6 +151,8 @@ def main() -> None:
     )
 
     answer = response.choices[0].message.content
+    if not answer:
+        raise ValueError("OpenAI response is empty")
     lines = answer.split("\n")
     print(f"#")
     wrapper = textwrap.TextWrapper(
