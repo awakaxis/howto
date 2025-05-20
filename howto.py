@@ -56,8 +56,8 @@ def save_config(config: ConfigParser) -> None:
 
 def print_help() -> None:
     print(
-        """
-Usage: howto [question] [OPTIONS] [--help]
+        f"""
+Usage: howto [question] [OPTIONS] [--help, -h]
 
 
 Query's Openai's api for information about any given question.
@@ -70,7 +70,7 @@ Query's Openai's api for information about any given question.
 
 --printhistory, -ph     Formats and prints the history.          
 
---clearhistory          Clears the local history (located in ~/.howto_history).
+--clearhistory, -ch     Clears the local history (located in {HISTORY_FILE}).
 
 --help, -h              Prints this message.
 """
@@ -86,7 +86,7 @@ def main() -> None:
         if arg1 in ["--help", "-h"]:
             print_help()
             sys.exit(1)
-        elif arg1 == "--clearhistory":
+        elif arg1 in ["--clearhistory", "-ch"]:
             save_history([])
             print("Cleared history.")
             sys.exit(1)
