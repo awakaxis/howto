@@ -54,6 +54,18 @@ def save_config(config: ConfigParser) -> None:
         config.write(f)
 
 
+def save_userinfo(userinfo: str) -> None:
+    with open(USERINFO_FILE, "w") as f:
+        f.write(userinfo)
+
+
+def load_userinfo() -> str:
+    if not os.path.exists(USERINFO_FILE):
+        return "[User has not set any userinfo]"
+    with open(USERINFO_FILE, "r") as f:
+        return f.read()
+
+
 def print_help() -> None:
     print(
         f"""
@@ -71,6 +83,11 @@ Query's Openai's api for information about any given question.
 --printhistory, -ph     Formats and prints the history.          
 
 --clearhistory, -ch     Clears the local history (located in {HISTORY_FILE}).
+
+--setuserinfo, -su      Sets the userinfo--information that is always prepended
+                        to the bot's memory.
+
+--clearuserinfo, -cu    Clears userinfo
 
 --help, -h              Prints this message.
 """
@@ -129,6 +146,17 @@ def main() -> None:
                         for line2 in wrapper.wrap(line):
                             print(f"   # {line2}")
             sys.exit(1)
+        elif arg1 in ["--setuserinfo", "-su"]:
+            if arg2 is None:
+                print(f"Current userinfo is: {load_userinfo()}")
+            else:
+                save_userinfo(arg2)
+                print(f"Set userinfo to:\n{arg2}")
+            sys.exit(1)
+        elif arg1 in ["--clearuserinfo", "-cu"]:
+            save_userinfo("[User has not set any userinfo]")
+            print("Cleared userinfo.")
+            sys.exit(1)
         print_help()
 
     question = " ".join(sys.argv[1:]).strip()
@@ -138,6 +166,7 @@ def main() -> None:
         sys.exit(1)
 
     history = load_history() + [{"role": "user", "content": question}]
+    userinfo = load_userinfo()
 
     response = CLIENT.chat.completions.create(
         model=config["ai model"]["model"],
@@ -145,7 +174,11 @@ def main() -> None:
             {
                 "role": "system",
                 "content": "You are an assistant contacted via a 'howto' CLI command. Questions may be formatted weirdly. If so, assume each question is preceded with 'how to' or similar. If the question can be answered in one or two sentences without immediately important information, keep responses short.",
-            }
+            },
+            {
+                "role": "system",
+                "content": f"The user provided the following information about themself or their system or platform for context: {userinfo}",
+            },
         ]
         + history,
     )
