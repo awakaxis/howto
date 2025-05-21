@@ -105,7 +105,6 @@ def main() -> None:
     if arg1 is not None and arg1.startswith("-"):
         if arg1 in ["--help", "-h"]:
             print_help()
-            sys.exit(1)
         elif arg1 in ["--clearhistory", "-ch"]:
             save_history([])
             print("Cleared history.")
