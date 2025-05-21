@@ -89,6 +89,9 @@ Query's Openai's api for information about any given question.
 
 --clearuserinfo, -cu    Clears userinfo.
 
+--continuous, -c        Enters continuous mode--keeps the dialogue open until
+                        'quit' is entered.
+
 --help, -h              Prints this message.
 """
     )
@@ -157,15 +160,24 @@ def main() -> None:
             save_userinfo("[User has not set any userinfo]")
             print("Cleared userinfo.")
             sys.exit(1)
+        elif arg1 in ["--continuous", "-c"]:
+            while True:
+                PROMPT = f"Ask {config['ai model']['model']} >> "
+
+                query = input(PROMPT)
+                if query == "quit":
+                    print("Goodbye.")
+                    sys.exit(1)
+                else:
+                    run_query(query, config)
+    run_query(" ".join(sys.argv[1:]).strip(), config)
+
+
+def run_query(query, config) -> None:
+    if not query:
         print_help()
 
-    question = " ".join(sys.argv[1:]).strip()
-
-    if not question:
-        print_help()
-        sys.exit(1)
-
-    history = load_history() + [{"role": "user", "content": question}]
+    history = load_history() + [{"role": "user", "content": query}]
     userinfo = load_userinfo()
 
     response = CLIENT.chat.completions.create(
