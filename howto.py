@@ -87,7 +87,7 @@ Query's Openai's api for information about any given question.
 --setuserinfo, -su      Sets the userinfo--information that is always prepended
                         to the bot's memory.
 
---clearuserinfo, -cu    Clears userinfo
+--clearuserinfo, -cu    Clears userinfo.
 
 --help, -h              Prints this message.
 """
