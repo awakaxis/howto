@@ -152,7 +152,10 @@ def main() -> None:
                 print(f"Current model is: '{get_model(config)}'")
                 sys.exit(1)
 
+            valid_models = get_args(ChatModel)
+            if arg2 not in valid_models:
                 print(f"Invalid model: '{arg2}'")
+                print(f"Must be one of:\n{'\n'.join(valid_models)}")
                 sys.exit(1)
 
             set_model(config, arg2)
@@ -247,7 +250,8 @@ def run_query(query, config) -> None:
             },
             {
                 "role": "system",
-                "content": f"The user provided the following information about themself or their system or platform for context: {userinfo}",
+                "content": f'The user provided the following information about themself or their system or platform for context: "{userinfo}"',
+            },
             {
                 "role": "system",
                 "content": f'The user provided the following information about the current project / working directory for context: "{project_context}"',
