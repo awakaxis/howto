@@ -3,6 +3,7 @@ import os
 import sys
 import textwrap
 from configparser import ConfigParser
+from typing import Optional
 
 from openai import OpenAI
 from openai.types import ChatModel
@@ -51,6 +52,9 @@ def load_config() -> ConfigParser:
     if not config.has_option("user info", "globalcontext"):
         config["user info"]["globalcontext"] = "[User has not set any userinfo]"
 
+    if not config.has_section("project context"):
+        config.add_section("project context")
+
     return config
 
 
@@ -83,6 +87,19 @@ def get_model(config: ConfigParser) -> str:
     return config["ai model"]["model"]
 
 
+def set_project_context(
+    config: ConfigParser, directory: str, context: Optional[str]
+) -> None:
+    if context is None:
+        config.remove_option("project context", directory)
+    else:
+        config["project context"][directory] = context
+
+
+def get_project_context(config: ConfigParser, directory: str) -> str:
+    return config["project context"].get(directory, "[The user has not set context]")
+
+
 def print_help() -> None:
     print(
         f"""
@@ -91,25 +108,29 @@ Usage: howto [question] [OPTIONS] [--help, -h]
 
 Query's Openai's api for information about any given question.
 
---setmodel              Sets the model used by howto (located in ~/.howto_config).
-                        Use without arguments to query the model.
+--setmodel                  Sets the model used by howto (located in ~/.howto_config).
+                            Use without arguments to query the model.
                 
---sethistory            Sets the length of howto's history. Use without arguments
-                        to query the history length.
+--sethistory                Sets the length of howto's history. Use without arguments
+                            to query the history length.
 
---printhistory, -ph     Formats and prints the history.          
+--printhistory, -ph         Formats and prints the history.          
 
---clearhistory, -ch     Clears the local history (located in {HISTORY_FILE}).
+--clearhistory, -ch         Clears the local history (located in {HISTORY_FILE}).
 
---setuserinfo, -su      Sets the userinfo--information that is always prepended
-                        to the bot's memory.
+--setuserinfo, -su          Sets the userinfo--information that is always prepended
+                            to the bot's memory.
 
---clearuserinfo, -cu    Clears userinfo.
+--clearuserinfo, -cu        Clears userinfo.
 
---continuous, -c        Enters continuous mode--keeps the dialogue open until
-                        'quit' is entered.
+--setprojectcontext, -sp    Sets the project context for the CWD.
 
---help, -h              Prints this message.
+--clearprojectcontext, -cp  Clears project context for the CWD.
+
+--continuous, -c            Enters continuous mode--keeps the dialogue open until
+                            'quit' is entered.
+
+--help, -h                  Prints this message.
 """
     )
     sys.exit(1)
@@ -131,7 +152,6 @@ def main() -> None:
                 print(f"Current model is: '{get_model(config)}'")
                 sys.exit(1)
 
-            if arg2 not in get_args(ChatModel):
                 print(f"Invalid model: '{arg2}'")
                 sys.exit(1)
 
@@ -189,6 +209,24 @@ def main() -> None:
                     sys.exit(1)
                 else:
                     run_query(query, config)
+        elif arg1 in ["--setprojectcontext", "-sp"]:
+            context = " ".join(sys.argv[2:]).strip()
+
+            if context == "":
+                print(f"CWD context is:\n{get_project_context(config, os.getcwd())}")
+            else:
+                set_project_context(config, os.getcwd(), context)
+                save_config(config)
+                print(
+                    f"Set CWD context to:\n{get_project_context(config, os.getcwd())}"
+                )
+            sys.exit(1)
+        elif arg1 in ["--clearprojectcontext", "-cp"]:
+            set_project_context(config, os.getcwd(), None)
+            save_config(config)
+            print("Cleared project context.")
+            sys.exit(1)
+
     run_query(" ".join(sys.argv[1:]).strip(), config)
 
 
@@ -198,6 +236,7 @@ def run_query(query, config) -> None:
 
     history = load_history() + [{"role": "user", "content": query}]
     userinfo = get_userinfo(config)
+    project_context = get_project_context(config, os.getcwd())
 
     response = CLIENT.chat.completions.create(
         model=get_model(config),
@@ -209,6 +248,9 @@ def run_query(query, config) -> None:
             {
                 "role": "system",
                 "content": f"The user provided the following information about themself or their system or platform for context: {userinfo}",
+            {
+                "role": "system",
+                "content": f'The user provided the following information about the current project / working directory for context: "{project_context}"',
             },
         ]
         + history,
