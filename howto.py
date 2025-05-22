@@ -46,6 +46,11 @@ def load_config() -> ConfigParser:
     if not config.has_option("ai model", "history"):
         config["ai model"]["history"] = "6"
 
+    if not config.has_section("user info"):
+        config.add_section("user info")
+    if not config.has_option("user info", "globalcontext"):
+        config["user info"]["globalcontext"] = "[User has not set any userinfo]"
+
     return config
 
 
@@ -54,16 +59,12 @@ def save_config(config: ConfigParser) -> None:
         config.write(f)
 
 
-def save_userinfo(userinfo: str) -> None:
-    with open(USERINFO_FILE, "w") as f:
-        f.write(userinfo)
+def set_userinfo(config: ConfigParser, userinfo: str) -> None:
+    config["user info"]["globalcontext"] = userinfo
 
 
-def load_userinfo() -> str:
-    if not os.path.exists(USERINFO_FILE):
-        return "[User has not set any userinfo]"
-    with open(USERINFO_FILE, "r") as f:
-        return f.read()
+def get_userinfo(config: ConfigParser) -> str:
+    return config["user info"]["globalcontext"]
 
 
 def print_help() -> None:
