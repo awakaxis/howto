@@ -67,6 +67,22 @@ def get_userinfo(config: ConfigParser) -> str:
     return config["user info"]["globalcontext"]
 
 
+def set_history_length(config: ConfigParser, length: str) -> None:
+    config["ai model"]["history"] = length
+
+
+def get_history_length(config: ConfigParser) -> str:
+    return config["ai model"]["history"]
+
+
+def set_model(config: ConfigParser, model: str) -> None:
+    config["ai model"]["model"] = model
+
+
+def get_model(config: ConfigParser) -> str:
+    return config["ai model"]["model"]
+
+
 def print_help() -> None:
     print(
         f"""
@@ -112,29 +128,29 @@ def main() -> None:
             sys.exit(1)
         elif arg1 == "--setmodel":
             if arg2 is None:
-                print(f"Current model is: '{config["ai model"]["model"]}'")
+                print(f"Current model is: '{get_model(config)}'")
                 sys.exit(1)
 
             if arg2 not in get_args(ChatModel):
                 print(f"Invalid model: '{arg2}'")
                 sys.exit(1)
 
-            config["ai model"]["model"] = arg2
+            set_model(config, arg2)
             save_config(config)
-            print(f"Model set to: '{config["ai model"]["model"]}'")
+            print(f"Model set to: '{get_model(config)}'")
             sys.exit(1)
         elif arg1 == "--sethistory":
             if arg2 is None:
-                print(f"History length is: {config["ai model"]["history"]}")
+                print(f"History length is: {get_history_length(config)}")
                 sys.exit(1)
 
             if not arg2.isdigit():
                 print(f"History length must be a number.")
                 sys.exit(1)
 
-            config["ai model"]["history"] = str(arg2)
+            set_history_length(config, arg2)
             save_config(config)
-            print(f"History length set to: {config["ai model"]["history"]}")
+            print(f"History length set to: {get_history_length(config)}")
             sys.exit(1)
         elif arg1 in ["--printhistory", "-ph"]:
             wrapper = textwrap.TextWrapper(
@@ -150,19 +166,22 @@ def main() -> None:
                             print(f"   # {line2}")
             sys.exit(1)
         elif arg1 in ["--setuserinfo", "-su"]:
-            if arg2 is None:
-                print(f"Current userinfo is: {load_userinfo()}")
+            userinfo = " ".join(sys.argv[2:]).strip()
+            if userinfo == "":
+                print(f"Current userinfo is:\n{get_userinfo(config)}")
             else:
-                save_userinfo(arg2)
-                print(f"Set userinfo to:\n{arg2}")
+                set_userinfo(config, userinfo)
+                save_config(config)
+                print(f"Set userinfo to:\n{get_userinfo(config)}")
             sys.exit(1)
         elif arg1 in ["--clearuserinfo", "-cu"]:
-            save_userinfo("[User has not set any userinfo]")
+            set_userinfo(config, "[User has not set any userinfo]")
+            save_config(config)
             print("Cleared userinfo.")
             sys.exit(1)
         elif arg1 in ["--continuous", "-c"]:
             while True:
-                PROMPT = f"Ask {config['ai model']['model']} >> "
+                PROMPT = f"Ask {get_model(config)} >> "
 
                 query = input(PROMPT)
                 if query == "quit":
@@ -178,10 +197,10 @@ def run_query(query, config) -> None:
         print_help()
 
     history = load_history() + [{"role": "user", "content": query}]
-    userinfo = load_userinfo()
+    userinfo = get_userinfo(config)
 
     response = CLIENT.chat.completions.create(
-        model=config["ai model"]["model"],
+        model=get_model(config),
         messages=[
             {
                 "role": "system",
