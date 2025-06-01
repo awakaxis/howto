@@ -1,3 +1,0 @@
-#!/usr/bin/bash
-
-~/howto/venv/bin/python ~/howto/howto.py "$@"
