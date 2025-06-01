@@ -17,9 +17,9 @@ if KEY is None:
 CLIENT = OpenAI(api_key=KEY)
 
 HOWTO_DIR = os.path.expanduser("~/.howto/")
-HISTORY_FILE = os.path.expanduser(f"{HOWTO_DIR}history")
-CONFIG_FILE = os.path.expanduser(f"{HOWTO_DIR}config")
-USERINFO_FILE = os.path.expanduser(f"{HOWTO_DIR}userinfo")
+HISTORY_FILE = HOWTO_DIR + "history.json"
+CONFIG_FILE = HOWTO_DIR + "config.ini"
+USERINFO_FILE = HOWTO_DIR + "userinfo.txt"
 
 os.makedirs(HOWTO_DIR, exist_ok=True)
 
